@@ -47,6 +47,11 @@ async function run(){
             const result = await BooksDatabase.insertOne(book);
             res.send(result);
         })
+        app.post('/user',async(req,res)=>{
+            const review = req.body;
+            const result = await UserDatabase.insertOne(review);
+            res.send(result);
+        })
         
     }catch(err){
         console.log(err.message);
