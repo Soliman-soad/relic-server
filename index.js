@@ -49,8 +49,11 @@ async function run(){
         })
         app.post('/user',async(req,res)=>{
             const review = req.body;
-            const result = await UserDatabase.insertOne(review);
-            res.send(result);
+            const cursor = await UserDatabase.find({email: review.email}).toArray()
+            if(cursor.length===0){
+                const result = await UserDatabase.insertOne(review);
+                res.send(result);
+            }
         })
         
     }catch(err){
