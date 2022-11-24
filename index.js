@@ -31,12 +31,22 @@ async function run(){
             const result = await cursor.toArray()
             res.send(result)
         })
+        app.get('/books',async(req,res)=>{
+            const cursor = BooksDatabase.find({})
+            const result = await cursor.toArray()
+            res.send(result)
+        })
         app.get('/category',async(req,res)=>{
             const cursor = CategoryDatabase.find({})
             const result = await cursor.toArray()
             res.send(result)
         })
-        
+       
+        app.post('/books',async(req,res)=>{
+            const book = req.body;
+            const result = await BooksDatabase.insertOne(book);
+            res.send(result);
+        })
         
     }catch(err){
         console.log(err.message);
