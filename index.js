@@ -10,10 +10,9 @@ const port = process.env.PORT || 5000;
 app.use(cors())
 app.use(express.json())
 
-console.log(process.env.DB_userName,process.env.DB_password)
 
 const uri =`mongodb+srv://${process.env.DB_userName}:${process.env.DB_password}@cluster0.ebizugo.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri)
+
 const client = new MongoClient(uri)
 
 
@@ -25,6 +24,12 @@ async function run(){
 
         const BooksDatabase= client.db('RelicBooks').collection('books');
         const UserDatabase= client.db('RelicBooks').collection('user');
+
+        app.get('/books',async(req,res)=>{
+            const cursor = BooksDatabase.find({})
+            const result = await cursor.toArray()
+            res.send(result)
+        })
         
         
     }catch(err){
