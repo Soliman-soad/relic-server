@@ -24,9 +24,15 @@ async function run(){
 
         const BooksDatabase= client.db('RelicBooks').collection('books');
         const UserDatabase= client.db('RelicBooks').collection('user');
+        const CategoryDatabase= client.db('RelicBooks').collection('category');
 
-        app.get('/books',async(req,res)=>{
-            const cursor = BooksDatabase.find({})
+        app.get('/advertiseBooks',async(req,res)=>{
+            const cursor = BooksDatabase.find({}).limit(3)
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+        app.get('/category',async(req,res)=>{
+            const cursor = CategoryDatabase.find({})
             const result = await cursor.toArray()
             res.send(result)
         })
