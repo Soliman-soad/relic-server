@@ -64,6 +64,19 @@ async function run(){
             const cursor = await UserDatabase.find({role: "seller"}).toArray()
             res.send(cursor)
         })
+        app.get('/buyers',async(req,res)=>{
+            const cursor = await UserDatabase.find({role: "buyer"}).toArray()
+            res.send(cursor)
+        })
+        app.delete('/buyers/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query ={
+                _id : ObjectId(id)
+            }
+            const result = await UserDatabase.deleteOne(query);
+            res.send(result)
+
+        })
         
     }catch(err){
         console.log(err.message);
