@@ -55,6 +55,15 @@ async function run(){
                 res.send(result);
             }
         })
+        app.get('/user',async(req,res)=>{
+            const email = req.query.email            
+            const cursor = await UserDatabase.find({email: email}).toArray()
+            res.send(cursor)
+        })
+        app.get('/sellers',async(req,res)=>{
+            const cursor = await UserDatabase.find({role: "seller"}).toArray()
+            res.send(cursor)
+        })
         
     }catch(err){
         console.log(err.message);
