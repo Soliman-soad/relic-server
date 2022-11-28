@@ -27,7 +27,7 @@ async function run(){
         const CategoryDatabase= client.db('RelicBooks').collection('category');
 
         app.get('/advertiseBooks',async(req,res)=>{
-            const cursor = BooksDatabase.find({}).limit(3)
+            const cursor = BooksDatabase.find({advertise:true})
             const result = await cursor.toArray()
             res.send(result)
         })
@@ -46,6 +46,12 @@ async function run(){
             }
             
         })
+        app.get('/myBooks',async(req,res)=>{
+            const category = req.query.category
+            const cursor = BooksDatabase.find({})
+            const result = await cursor.toArray()
+            res.send(result)            
+        })
         app.get('/booksCategory',async(req,res)=>{
             const id = req.query.id
             const category = await CategoryDatabase.find({_id:ObjectId(id)}).toArray()
@@ -56,6 +62,11 @@ async function run(){
         })
         app.get('/category',async(req,res)=>{
             const cursor = CategoryDatabase.find({})
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+        app.get('/reportedBooks',async(req,res)=>{
+            const cursor = BooksDatabase.find({reported: true})
             const result = await cursor.toArray()
             res.send(result)
         })
@@ -73,6 +84,44 @@ async function run(){
                 res.send(result);
             }
         })
+        app.patch('/books/:id',async(req,res)=>{
+            const id = req.params.id;
+            const productUpdateData = req.body;
+            const filter = {
+                _id: ObjectId(id)
+            }
+            const updateDoc = {
+                $set:productUpdateData
+            }
+            const result = await BooksDatabase.updateOne(filter,updateDoc)
+            
+            res.send(result)
+        })        
+        app.patch('/reportedBooks/:id',async(req,res)=>{
+            const id = req.params.id;
+            const productUpdateData = req.body;
+            const filter = {
+                _id: ObjectId(id)
+            }
+            const updateDoc = {
+                $set:productUpdateData
+            }
+            const result = await BooksDatabase.updateOne(filter,updateDoc)
+            res.send(result)
+
+        })        
+        app.patch('/verify/:id',async(req,res)=>{
+            const id = req.params.id;
+            const productUpdateData = req.body;
+            const filter = {
+                _id: ObjectId(id)
+            }
+            const updateDoc = {
+                $set:productUpdateData
+            }
+            const result = await UserDatabase.updateOne(filter,updateDoc)
+            res.send(result)
+        })        
         app.get('/user',async(req,res)=>{
             const email = req.query.email            
             const cursor = await UserDatabase.find({email: email}).toArray()
