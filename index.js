@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 
 app.use(cors())
 app.use(express.json())
-
+const stripe = require("stripe")(`${process.env.STRIPE_SK}`);
 
 const uri =`mongodb+srv://${process.env.DB_userName}:${process.env.DB_password}@cluster0.ebizugo.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -25,6 +25,7 @@ async function run(){
         const BooksDatabase= client.db('RelicBooks').collection('books');
         const UserDatabase= client.db('RelicBooks').collection('user');
         const CategoryDatabase= client.db('RelicBooks').collection('category');
+        const PaymentDatabase= client.db('RelicBooks').collection('payment');
 
         app.get('/advertiseBooks',async(req,res)=>{
             const cursor = BooksDatabase.find({advertise:true})
@@ -33,7 +34,6 @@ async function run(){
         })
         app.get('/books',async(req,res)=>{
             const category = req.query.category
-            console.log(category)
             if(category === ''){
             const cursor = BooksDatabase.find({})
             const result = await cursor.toArray()
@@ -49,6 +49,19 @@ async function run(){
         app.get('/myBooks',async(req,res)=>{
             const category = req.query.category
             const cursor = BooksDatabase.find({})
+            const result = await cursor.toArray()
+            res.send(result)            
+        })
+        app.get('/payment/:id',async(req,res)=>{
+            const id = req.params.id
+            const cursor = BooksDatabase.find({_id: ObjectId(id)})
+            const result = await cursor.toArray()
+            res.send(result)            
+        })
+        app.get('/myOrder',async(req,res)=>{
+            const category = req.query.user
+            console.log(category)
+            const cursor = BooksDatabase.find({user: category})
             const result = await cursor.toArray()
             res.send(result)            
         })
@@ -84,6 +97,7 @@ async function run(){
                 res.send(result);
             }
         })
+        
         app.patch('/books/:id',async(req,res)=>{
             const id = req.params.id;
             const productUpdateData = req.body;
@@ -98,6 +112,32 @@ async function run(){
             res.send(result)
         })        
         app.patch('/reportedBooks/:id',async(req,res)=>{
+            const id = req.params.id;
+            const productUpdateData = req.body;
+            const filter = {
+                _id: ObjectId(id)
+            }
+            const updateDoc = {
+                $set:productUpdateData
+            }
+            const result = await BooksDatabase.updateOne(filter,updateDoc)
+            res.send(result)
+
+        })        
+        app.patch('/addUser/:id',async(req,res)=>{
+            const id = req.params.id;
+            const productUpdateData = req.body;
+            const filter = {
+                _id: ObjectId(id)
+            }
+            const updateDoc = {
+                $set:productUpdateData
+            }
+            const result = await BooksDatabase.updateOne(filter,updateDoc)
+            res.send(result)
+
+        })        
+        app.patch('/paymentData/:id',async(req,res)=>{
             const id = req.params.id;
             const productUpdateData = req.body;
             const filter = {
@@ -162,6 +202,22 @@ async function run(){
             res.send(result)
 
         })
+        app.post("/create-payment-intent", async (req, res) => {
+            const items = req.body;
+            const amount = items.price*100
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount: amount,
+              currency: "usd",
+              "payment_method_types": [
+                "card"
+              ],
+            });
+          console.log(items)
+            res.send({
+              clientSecret: paymentIntent.client_secret,
+            });
+          });
+          
         
     }catch(err){
         console.log(err.message);
