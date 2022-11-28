@@ -32,9 +32,27 @@ async function run(){
             res.send(result)
         })
         app.get('/books',async(req,res)=>{
+            const category = req.query.category
+            console.log(category)
+            if(category === ''){
             const cursor = BooksDatabase.find({})
             const result = await cursor.toArray()
             res.send(result)
+            }
+            else{
+            const cursor = BooksDatabase.find({category:category})
+            const result = await cursor.toArray()
+            res.send(result)
+            }
+            
+        })
+        app.get('/booksCategory',async(req,res)=>{
+            const id = req.query.id
+            const category = await CategoryDatabase.find({_id:ObjectId(id)}).toArray()
+            const cursor = BooksDatabase.find({category:category[0].name})
+            const result = await cursor.toArray()
+            res.send(result)
+            
         })
         app.get('/category',async(req,res)=>{
             const cursor = CategoryDatabase.find({})
