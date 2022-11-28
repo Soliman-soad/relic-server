@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient,ObjectId } = require('mongodb');
+var jwt = require('jsonwebtoken');
 const { response } = require('express');
 require('dotenv').config();
 const app =express();
@@ -15,6 +16,20 @@ const uri =`mongodb+srv://${process.env.DB_userName}:${process.env.DB_password}@
 
 const client = new MongoClient(uri)
 
+function verifyJWT(req,res,next){
+    const authHeader = req.headers.authorization
+    if(!authHeader){
+        return res.status(401).send({message:'unauthorize access'})
+    }
+    const token = authHeader.split(' ')[1]
+    jwt.verify(token,process.env.ACCES_TOKEN_SECRET, function(err,decoded){
+        if(err){
+            return res.status(401).send({message:'unauthorize access'})
+        }
+        req.decoded =decoded;
+        next()
+    })
+}
 
 
 
@@ -32,6 +47,11 @@ async function run(){
             const result = await cursor.toArray()
             res.send(result)
         })
+        app.post('/jwt',(req,res)=>{
+            const user = req.body;
+            const token = jwt.sign(user,process.env.ACCES_TOKEN_SECRET,{expiresIn:'1h'})
+            res.send({token})
+        })        
         app.get('/books',async(req,res)=>{
             const category = req.query.category
             if(category === ''){
@@ -52,15 +72,26 @@ async function run(){
             const result = await cursor.toArray()
             res.send(result)            
         })
-        app.get('/payment/:id',async(req,res)=>{
+        app.get('/payment/:id',verifyJWT,async(req,res)=>{
+            const decoded =req.decoded
+            console.log(decoded.user)
+            console.log(req.query.email)
+            if(decoded.user !== req.query.email){
+                res.send({message:'unauthorized access'})
+            }
             const id = req.params.id
             const cursor = BooksDatabase.find({_id: ObjectId(id)})
             const result = await cursor.toArray()
             res.send(result)            
         })
-        app.get('/myOrder',async(req,res)=>{
+        app.get('/myOrder',verifyJWT,async(req,res)=>{
+            const decoded =req.decoded
+            console.log(decoded.user)
+            console.log(req.query.email)
+            if(decoded.user !== req.query.email){
+                res.send({message:'unauthorized access'})
+            }
             const category = req.query.user
-            console.log(category)
             const cursor = BooksDatabase.find({user: category})
             const result = await cursor.toArray()
             res.send(result)            
@@ -78,13 +109,20 @@ async function run(){
             const result = await cursor.toArray()
             res.send(result)
         })
-        app.get('/reportedBooks',async(req,res)=>{
+        app.get('/reportedBooks',verifyJWT,async(req,res)=>{
+            const decoded =req.decoded
+            console.log(decoded.user)
+            console.log(req.query.email)
+            if(decoded.user !== req.query.email){
+                res.send({message:'unauthorized access'})
+            }
             const cursor = BooksDatabase.find({reported: true})
             const result = await cursor.toArray()
             res.send(result)
         })
        
         app.post('/books',async(req,res)=>{
+            
             const book = req.body;
             const result = await BooksDatabase.insertOne(book);
             res.send(result);
@@ -99,6 +137,7 @@ async function run(){
         })
         
         app.patch('/books/:id',async(req,res)=>{
+            
             const id = req.params.id;
             const productUpdateData = req.body;
             const filter = {
@@ -162,7 +201,13 @@ async function run(){
             const result = await UserDatabase.updateOne(filter,updateDoc)
             res.send(result)
         })        
-        app.get('/user',async(req,res)=>{
+        app.get('/user',verifyJWT,async(req,res)=>{
+            const decoded =req.decoded
+            console.log(decoded.user)
+            console.log(req.query.email)
+            if(decoded.user !== req.query.email){
+                res.send({message:'unauthorized access'})
+            }
             const email = req.query.email            
             const cursor = await UserDatabase.find({email: email}).toArray()
             res.send(cursor)
@@ -193,7 +238,7 @@ async function run(){
             res.send(result)
 
         })
-        app.delete('/books/:id',async(req,res)=>{
+        app.delete('/books/:id',verifyJWT,async(req,res)=>{
             const id = req.params.id;
             const query ={
                 _id : ObjectId(id)
@@ -202,7 +247,7 @@ async function run(){
             res.send(result)
 
         })
-        app.post("/create-payment-intent", async (req, res) => {
+        app.post("/create-payment-intent",async (req, res) => {
             const items = req.body;
             const amount = items.price*100
             const paymentIntent = await stripe.paymentIntents.create({
